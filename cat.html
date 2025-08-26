@@ -1,7 +1,7 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>Rotating Bouncing Cat</title>
   <title>Bouncing, Rotating Cats That Multiply!</title>
   <style>
     body {
@@ -10,44 +10,41 @@
       overflow: hidden;
     }
 
+    #cat {
     .cat {
       position: absolute;
       width: 32px;
       height: 32px;
-      font-size: 28px;
-      text-align: center;
-      line-height: 32px;
-      background: #222;
-      color: white;
-      border: 2px solid #fff;
-      font-family: monospace;
-      image-rendering: pixelated;
-      will-change: transform;
-    }
+@@ -27,33 +27,101 @@
   </style>
 </head>
 <body>
+  <div id="cat">😺</div>
 
+  <script>
+    const cat = document.getElementById('cat');
+    let x = 100, y = 100;
+    let vx = 2, vy = 2;
+    let angle = 0;
 <script>
   const cats = [];
   let catId = 0;
 
-  function getRandomVelocity() {
-    let v = 0;
-    while (Math.abs(v) < 1.5) {
-      v = (Math.random() - 0.5) * 6; // Range: -3 to 3, avoids near-zero
-    }
-    return v;
-  }
-
+    function animate() {
+      const maxX = window.innerWidth - cat.offsetWidth;
+      const maxY = window.innerHeight - cat.offsetHeight;
   function createCat(x = 100, y = 100, vx = 2, vy = 2) {
     const div = document.createElement('div');
     div.classList.add('cat');
     div.textContent = '😺';
     div.dataset.id = catId++;
 
+      x += vx;
+      y += vy;
     document.body.appendChild(div);
 
+      if (x <= 0 || x >= maxX) vx *= -1;
+      if (y <= 0 || y >= maxY) vy *= -1;
     const cat = {
       id: div.dataset.id,
       el: div,
@@ -60,15 +57,17 @@
       height: 32
     };
 
+      angle += 5; // rotate 5 degrees per frame
+      if (angle >= 360) angle -= 360;
     cats.push(cat);
   }
 
+      cat.style.transform = `translate(${x}px, ${y}px) rotate(${angle}deg)`;
   // Initial two cats
   createCat(100, 100, 2, 2);
   createCat(300, 200, -2, 2);
 
-  const collisionCooldowns = new Map();
-
+      requestAnimationFrame(animate);
   function update() {
     const maxX = window.innerWidth - 32;
     const maxY = window.innerHeight - 32;
@@ -86,36 +85,38 @@
       cat.el.style.transform = `translate(${cat.x}px, ${cat.y}px) rotate(${cat.angle}deg)`;
     }
 
+    animate();
+  </script>
     checkCollisions();
     requestAnimationFrame(update);
   }
 
   function checkCollisions() {
-    const now = performance.now();
-
     for (let i = 0; i < cats.length; i++) {
       for (let j = i + 1; j < cats.length; j++) {
         const a = cats[i];
         const b = cats[j];
 
-        const key = `${a.id}-${b.id}`;
-
         if (isColliding(a, b)) {
-          const lastCollision = collisionCooldowns.get(key) || 0;
-
-          if (now - lastCollision >= 1500) {
-            const spawnX = (a.x + b.x) / 2;
-            const spawnY = (a.y + b.y) / 2;
-
+          // Only spawn one cat per collision
+          if (!a.hasCollidedWith || !a.hasCollidedWith.includes(b.id)) {
             createCat(
-              spawnX,
-              spawnY,
-              getRandomVelocity(),
-              getRandomVelocity()
+              Math.random() * (window.innerWidth - 32),
+              Math.random() * (window.innerHeight - 32),
+              (Math.random() - 0.5) * 4,
+              (Math.random() - 0.5) * 4
             );
 
-            collisionCooldowns.set(key, now);
+            // Mark collision so we don't repeatedly spawn on the same overlap
+            a.hasCollidedWith = a.hasCollidedWith || [];
+            b.hasCollidedWith = b.hasCollidedWith || [];
+            a.hasCollidedWith.push(b.id);
+            b.hasCollidedWith.push(a.id);
           }
+        } else {
+          // Reset collision record when no longer overlapping
+          a.hasCollidedWith = a.hasCollidedWith?.filter(id => id !== b.id);
+          b.hasCollidedWith = b.hasCollidedWith?.filter(id => id !== a.id);
         }
       }
     }
