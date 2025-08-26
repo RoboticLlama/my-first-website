@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>6-Bit Bouncing Cat</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      overflow: hidden;
+    }
+
+    #cat {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      font-size: 28px;
+      text-align: center;
+      line-height: 32px;
+      background: #222;
+      color: white;
+      border: 2px solid #fff;
+      font-family: monospace;
+      image-rendering: pixelated;
+    }
+  </style>
+</head>
+<body>
+  <div id="cat">😺</div>
+
+  <script>
+    const cat = document.getElementById('cat');
+    let x = 100, y = 100;
+    let vx = 2, vy = 2;
+
+    function animate() {
+      const maxX = window.innerWidth - cat.offsetWidth;
+      const maxY = window.innerHeight - cat.offsetHeight;
+
+      x += vx;
+      y += vy;
+
+      if (x <= 0 || x >= maxX) vx *= -1;
+      if (y <= 0 || y >= maxY) vy *= -1;
+
+      cat.style.left = x + 'px';
+      cat.style.top = y + 'px';
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+</body>
+</html>
