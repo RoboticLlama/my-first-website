@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Rotating Bouncing Cat</title>
+  <title>Bouncing, Rotating Cats That Multiply!</title>
   <style>
     body {
       margin: 0;
@@ -10,7 +10,7 @@
       overflow: hidden;
     }
 
-    #cat {
+    .cat {
       position: absolute;
       width: 32px;
       height: 32px;
@@ -27,33 +27,101 @@
   </style>
 </head>
 <body>
-  <div id="cat">😺</div>
 
-  <script>
-    const cat = document.getElementById('cat');
-    let x = 100, y = 100;
-    let vx = 2, vy = 2;
-    let angle = 0;
+<script>
+  const cats = [];
+  let catId = 0;
 
-    function animate() {
-      const maxX = window.innerWidth - cat.offsetWidth;
-      const maxY = window.innerHeight - cat.offsetHeight;
+  function createCat(x = 100, y = 100, vx = 2, vy = 2) {
+    const div = document.createElement('div');
+    div.classList.add('cat');
+    div.textContent = '😺';
+    div.dataset.id = catId++;
 
-      x += vx;
-      y += vy;
+    document.body.appendChild(div);
 
-      if (x <= 0 || x >= maxX) vx *= -1;
-      if (y <= 0 || y >= maxY) vy *= -1;
+    const cat = {
+      id: div.dataset.id,
+      el: div,
+      x: x,
+      y: y,
+      vx: vx,
+      vy: vy,
+      angle: 0,
+      width: 32,
+      height: 32
+    };
 
-      angle += 5; // rotate 5 degrees per frame
-      if (angle >= 360) angle -= 360;
+    cats.push(cat);
+  }
 
-      cat.style.transform = `translate(${x}px, ${y}px) rotate(${angle}deg)`;
+  // Initial two cats
+  createCat(100, 100, 2, 2);
+  createCat(300, 200, -2, 2);
 
-      requestAnimationFrame(animate);
+  function update() {
+    const maxX = window.innerWidth - 32;
+    const maxY = window.innerHeight - 32;
+
+    for (let cat of cats) {
+      cat.x += cat.vx;
+      cat.y += cat.vy;
+
+      if (cat.x <= 0 || cat.x >= maxX) cat.vx *= -1;
+      if (cat.y <= 0 || cat.y >= maxY) cat.vy *= -1;
+
+      cat.angle += 5;
+      if (cat.angle >= 360) cat.angle -= 360;
+
+      cat.el.style.transform = `translate(${cat.x}px, ${cat.y}px) rotate(${cat.angle}deg)`;
     }
 
-    animate();
-  </script>
+    checkCollisions();
+    requestAnimationFrame(update);
+  }
+
+  function checkCollisions() {
+    for (let i = 0; i < cats.length; i++) {
+      for (let j = i + 1; j < cats.length; j++) {
+        const a = cats[i];
+        const b = cats[j];
+
+        if (isColliding(a, b)) {
+          // Only spawn one cat per collision
+          if (!a.hasCollidedWith || !a.hasCollidedWith.includes(b.id)) {
+            createCat(
+              Math.random() * (window.innerWidth - 32),
+              Math.random() * (window.innerHeight - 32),
+              (Math.random() - 0.5) * 4,
+              (Math.random() - 0.5) * 4
+            );
+
+            // Mark collision so we don't repeatedly spawn on the same overlap
+            a.hasCollidedWith = a.hasCollidedWith || [];
+            b.hasCollidedWith = b.hasCollidedWith || [];
+            a.hasCollidedWith.push(b.id);
+            b.hasCollidedWith.push(a.id);
+          }
+        } else {
+          // Reset collision record when no longer overlapping
+          a.hasCollidedWith = a.hasCollidedWith?.filter(id => id !== b.id);
+          b.hasCollidedWith = b.hasCollidedWith?.filter(id => id !== a.id);
+        }
+      }
+    }
+  }
+
+  function isColliding(a, b) {
+    return !(
+      a.x + a.width < b.x ||
+      a.x > b.x + b.width ||
+      a.y + a.height < b.y ||
+      a.y > b.y + b.height
+    );
+  }
+
+  update();
+</script>
+
 </body>
 </html>
