@@ -59,6 +59,8 @@
   createCat(100, 100, 2, 2);
   createCat(300, 200, -2, 2);
 
+  const collisionCooldowns = new Map(); // 🆕
+
   function update() {
     const maxX = window.innerWidth - 32;
     const maxY = window.innerHeight - 32;
@@ -81,31 +83,32 @@
   }
 
   function checkCollisions() {
+    const now = performance.now();
+
     for (let i = 0; i < cats.length; i++) {
       for (let j = i + 1; j < cats.length; j++) {
         const a = cats[i];
         const b = cats[j];
 
+        const key = `${a.id}-${b.id}`;
+
         if (isColliding(a, b)) {
-          // Only spawn one cat per collision
-          if (!a.hasCollidedWith || !a.hasCollidedWith.includes(b.id)) {
+          const lastCollision = collisionCooldowns.get(key) || 0;
+
+          if (now - lastCollision >= 1500) {
+            // Spawn at collision midpoint 🆕
+            const spawnX = (a.x + b.x) / 2;
+            const spawnY = (a.y + b.y) / 2;
+
             createCat(
-              Math.random() * (window.innerWidth - 32),
-              Math.random() * (window.innerHeight - 32),
+              spawnX,
+              spawnY,
               (Math.random() - 0.5) * 4,
               (Math.random() - 0.5) * 4
             );
 
-            // Mark collision so we don't repeatedly spawn on the same overlap
-            a.hasCollidedWith = a.hasCollidedWith || [];
-            b.hasCollidedWith = b.hasCollidedWith || [];
-            a.hasCollidedWith.push(b.id);
-            b.hasCollidedWith.push(a.id);
+            collisionCooldowns.set(key, now);
           }
-        } else {
-          // Reset collision record when no longer overlapping
-          a.hasCollidedWith = a.hasCollidedWith?.filter(id => id !== b.id);
-          b.hasCollidedWith = b.hasCollidedWith?.filter(id => id !== a.id);
         }
       }
     }
