@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>6-Bit Bouncing Cat</title>
+  <title>Rotating Bouncing Cat</title>
   <style>
     body {
       margin: 0;
@@ -22,6 +22,7 @@
       border: 2px solid #fff;
       font-family: monospace;
       image-rendering: pixelated;
+      will-change: transform;
     }
   </style>
 </head>
@@ -32,6 +33,7 @@
     const cat = document.getElementById('cat');
     let x = 100, y = 100;
     let vx = 2, vy = 2;
+    let angle = 0;
 
     function animate() {
       const maxX = window.innerWidth - cat.offsetWidth;
@@ -43,8 +45,10 @@
       if (x <= 0 || x >= maxX) vx *= -1;
       if (y <= 0 || y >= maxY) vy *= -1;
 
-      cat.style.left = x + 'px';
-      cat.style.top = y + 'px';
+      angle += 5; // rotate 5 degrees per frame
+      if (angle >= 360) angle -= 360;
+
+      cat.style.transform = `translate(${x}px, ${y}px) rotate(${angle}deg)`;
 
       requestAnimationFrame(animate);
     }
